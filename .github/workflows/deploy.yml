@@ -10,15 +10,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Check out the latest code from the repository
       - name: Checkout code
         uses: actions/checkout@v2
+
+      # Step 2: Create the private key file from GitHub Secrets
+      - name: Create private key file
+        run: |
+          echo "${{ secrets.EC2_KEY }}" > ec2_private_key.pem
+          chmod 600 ec2_private_key.pem
+
+      # Step 3: Ensure known_hosts file exists and clean previous entries (for SSH key)
+      - name: Setup SSH Known Hosts
+        run: |
+          mkdir -p ~/.ssh
+          touch ~/.ssh/known_hosts
+          ssh-keygen -R "${{ secrets.EC2_HOST }}"
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
 
       - name: SSH into EC2 and Deploy
         uses: appleboy/ssh-action@v0.1.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
+          key: ec2_private_key.pem
           port: 22
 
           script: |
@@ -35,5 +50,11 @@ jobs:
             docker stop trademarkia || true
             docker rm trademarkia || true
 
+            # Remove unused Docker images to free space (optional)
+            docker image prune -f
+
             # Run the container in detached mode on port 8080
             docker run -d -p 8080:8080 --name trademarkia trademarkia:latest
+
+      - name: Cleanup
+        run: rm -f ec2_private_key.pem
