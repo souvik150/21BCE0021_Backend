@@ -45,7 +45,7 @@ func main() {
     // setup hello world route
     router.GET("/", func(c *gin.Context) {
         c.JSON(200, gin.H{
-            "message": "Hello, World!",
+            "message": "Welcome to File Sharing App API (Tradmarkia Assignment)",
         })
     })
 
