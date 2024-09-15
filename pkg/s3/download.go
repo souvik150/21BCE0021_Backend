@@ -1,4 +1,4 @@
-package s3service
+package s3
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 
 	appConfig "github.com/souvik150/file-sharing-app/internal/config"
-	"github.com/souvik150/file-sharing-app/internal/utils"
+	"github.com/souvik150/file-sharing-app/pkg/utils"
 )
 
 func DownloadFile(fileID string) ([]byte, error) {

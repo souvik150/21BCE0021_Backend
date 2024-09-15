@@ -1,4 +1,4 @@
-package s3service
+package s3
 
 import (
 	"context"

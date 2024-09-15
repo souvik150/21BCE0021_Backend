@@ -42,10 +42,9 @@ func Connect() {
 	if err != nil {
 		log.Fatalf("Failed to enable uuid-ossp extension: %v", err)
 	}
-	log.Println("uuid-ossp extension is enabled.")
-
 	
-	log.Println("Connected to PostgreSQL successfully.")
+	log.Println("🚀 uuid-ossp extension is enabled.")
+	log.Println("✅ Connected to PostgreSQL successfully.")
 }
 
 func GetDB() *gorm.DB {

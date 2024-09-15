@@ -8,7 +8,7 @@ import (
 
 	"github.com/souvik150/file-sharing-app/internal/database"
 	"github.com/souvik150/file-sharing-app/internal/models"
-	"github.com/souvik150/file-sharing-app/internal/s3service"
+	"github.com/souvik150/file-sharing-app/pkg/s3"
 )
 
 func ServeSharedFileHandler(c *gin.Context) {
@@ -21,19 +21,17 @@ func ServeSharedFileHandler(c *gin.Context) {
 	dbClient := database.GetDB()
 	var sharedLink models.SharedLink
 
-	// Look up the shared link in the database
 	if err := dbClient.Where("share_token = ?", shareToken).First(&sharedLink).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Link not found"})
 		return
 	}
 
-	// Check if the link has expired
 	if time.Now().After(sharedLink.ExpiresAt) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Link has expired"})
 		return
 	}
 
-	fileData, err := s3service.DownloadFile(sharedLink.FileID.String())
+	fileData, err := s3.DownloadFile(sharedLink.FileID.String())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve file"})
 		return
