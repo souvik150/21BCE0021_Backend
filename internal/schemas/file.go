@@ -1,6 +1,10 @@
 package schemas
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type UploadedFileResponse struct {
 	FileNames []string `json:"file_names"`
@@ -19,4 +23,13 @@ type FileResponse struct {
 
 type FilesResponse struct {
 	Files []FileResponse `json:"files"`
+}
+
+
+type RenameFileResponse struct {
+	ID        string    `json:"id"`
+	FileName  string    `json:"fileName"`
+	FileType	string    `json:"fileType"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }

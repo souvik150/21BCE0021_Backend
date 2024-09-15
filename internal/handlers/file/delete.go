@@ -35,7 +35,11 @@ func DeleteFileHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "File deleted (soft delete)"})
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "File deleted successfully",
+		"data":    file.FileName + " deleted",
+	})
 }
 
 func GetUserDeletedFilesHandler(c *gin.Context) {
