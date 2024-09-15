@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	"github.com/souvik150/file-sharing-app/internal/cache"
 	"github.com/souvik150/file-sharing-app/internal/config"
 	"github.com/souvik150/file-sharing-app/internal/database"
 	"github.com/souvik150/file-sharing-app/internal/routes"
+	appUtils "github.com/souvik150/file-sharing-app/internal/utils"
 )
 
 func main() {
@@ -40,6 +42,10 @@ func main() {
     fmt.Printf("Value from Redis: %s\n", val)
 
 	router := gin.Default()
+
+    router.Use(cors.Default()) 
+    router.Use(appUtils.UnauthenticatedRateLimiterMiddleware())
+
 	routes.SetupRoutes(router)
 
     // setup hello world route

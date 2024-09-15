@@ -15,9 +15,9 @@ func SetupRoutes(r *gin.Engine) {
 	protected.Use(middleware.AuthMiddleware()) 
 	{
 		protected.POST("/upload", handlers.UploadMultipleFilesHandler)
-		protected.GET("/share/:id", handlers.GenerateLinkHandler)
-		protected.GET("/rename", handlers.UpdateFileHandler)
+		protected.GET("/share", handlers.GenerateLinkHandler)
 		protected.GET("/my-files", handlers.GetUserFilesHandler)
+		protected.POST("/update", handlers.UpdateFileHandler)
 		protected.GET("/me", handlers.GetCurrentUser)
 	}
 }

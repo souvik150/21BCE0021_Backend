@@ -4,17 +4,25 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
+
+	"golang.org/x/time/rate"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )
 
-var jwtSecretKey = []byte("your_secret_key")
+var (
+	jwtSecretKey = []byte("your_secret_key")
+	limiterMap = make(map[string]*rate.Limiter)
+	mu         sync.Mutex
+)
 
-// AuthMiddleware checks for a valid JWT token in the Authorization header
+const rateLimit = 100
+
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get the token from the Authorization header
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is missing"})
@@ -33,12 +41,41 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Token is valid, add it to context
 		claims := token.Claims.(jwt.MapClaims)
-		log.Println(claims)
 		userID := claims["userID"]
-		log.Println(userID)
+		log.Println("Authenticated user:", userID)
 		c.Set("userID", userID)
+
+		// Proceed with rate limiting
+		if !rateLimitMiddleware(c, userID.(string)) {
+			return
+		}
+
 		c.Next()
 	}
+}
+
+func rateLimitMiddleware(c *gin.Context, userID string) bool {
+	limiter := getLimiter(userID)
+
+	if !limiter.Allow() {
+		c.JSON(http.StatusTooManyRequests, gin.H{"error": "rate limit exceeded"})
+		c.Abort()
+		return false
+	}
+
+	return true
+}
+
+func getLimiter(userID string) *rate.Limiter {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if limiter, exists := limiterMap[userID]; exists {
+		return limiter
+	}
+
+	limiter := rate.NewLimiter(rate.Every(time.Minute/time.Duration(rateLimit)), rateLimit)
+	limiterMap[userID] = limiter
+	return limiter
 }

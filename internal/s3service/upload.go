@@ -181,7 +181,7 @@ func GeneratePresignedURL(objectKey string) (string, error) {
 
 	s3Client := s3.NewFromConfig(cfg)
 	presignClient := s3.NewPresignClient(s3Client)
-	expiryDuration := 1 * time.Minute
+	expiryDuration := 15 * time.Minute
 
 	presignedReq, err := presignClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
