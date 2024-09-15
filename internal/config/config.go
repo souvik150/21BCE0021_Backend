@@ -13,6 +13,9 @@ type Config struct {
 		AWSAccessKey string
 		AWSSecretKey string
 		AWSRegion string
+		EncryptionKey string
+		BucketName string
+		BackendURL string
 }
 
 var AppConfig *Config
@@ -50,11 +53,29 @@ func LoadConfig() {
 			log.Fatal("AWS_REGION is required")
 		}
 
+		encryptionKey := viper.GetString("ENCRYPTION_KEY")
+		if encryptionKey == "" {
+			log.Fatal("ENCRYPTION_KEY is required")
+		}
+
+		bucketName := viper.GetString("AWS_BUCKET_NAME")
+		if bucketName == "" {
+			log.Fatal("AWS_BUCKET_NAME is required")
+		}
+
+		backendURL := viper.GetString("BACKEND_URL")
+		if backendURL == "" {
+			log.Fatal("BACKEND_URL is required")
+		}
+
     AppConfig = &Config{
         PostgresURI: postgresURI,
         RedisURI:    redisURI,
 				AWSAccessKey: accessKey,
 				AWSSecretKey: secretKey,
 				AWSRegion: region,
+				EncryptionKey: encryptionKey,
+				BucketName: bucketName,
+				BackendURL: backendURL,
     }
 }

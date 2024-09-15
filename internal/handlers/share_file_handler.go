@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	appConfig "github.com/souvik150/file-sharing-app/internal/config"
 	"github.com/souvik150/file-sharing-app/internal/database"
 	"github.com/souvik150/file-sharing-app/internal/models"
 )
@@ -43,7 +44,8 @@ func ShareFileHandler(c *gin.Context) {
 		return
 	}
 
-	shareableLink := fmt.Sprintf("https://trademarkia.souvik150.com/share/%s", shareToken)
+	backendURL := appConfig.AppConfig.BackendURL
+	shareableLink := fmt.Sprintf("%s/share/%s",backendURL , shareToken)
 
 	c.JSON(http.StatusOK, gin.H{"shareable_link": shareableLink})
 }

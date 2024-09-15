@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/souvik150/file-sharing-app/internal/cache"
+	appConfig "github.com/souvik150/file-sharing-app/internal/config"
 	"github.com/souvik150/file-sharing-app/internal/database"
 	"github.com/souvik150/file-sharing-app/internal/models"
 	"github.com/souvik150/file-sharing-app/internal/s3service"
@@ -128,7 +129,7 @@ func UploadMultipleFilesHandler(c *gin.Context) {
 				return
 			}
 
-			bucket := "trademarkia-assignment"
+			bucket := appConfig.AppConfig.BucketName
 			uploadedFileName := newFile.ID.String()
 			log.Printf("Uploading file: %s to bucket: %s with ID: %s", header.Filename, bucket, uploadedFileName)
 

@@ -19,7 +19,7 @@ func DownloadFile(fileID string) ([]byte, error) {
 	accessKey := appConfig.AppConfig.AWSAccessKey
 	secretKey := appConfig.AppConfig.AWSSecretKey
 	region := appConfig.AppConfig.AWSRegion
-	encryptionKey := []byte("pvp5j1ADUXkgMII1tf7YaHail5F1MYv8")
+	encryptionKey := []byte(appConfig.AppConfig.EncryptionKey)
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
@@ -30,7 +30,7 @@ func DownloadFile(fileID string) ([]byte, error) {
 		return nil, err
 	}
 
-	bucket := "trademarkia-assignment"
+	bucket := appConfig.AppConfig.BucketName
 	s3Client := s3.NewFromConfig(cfg)
 	log.Printf("Downloading file: %s", fileID)
 	resp, err := s3Client.GetObject(context.TODO(), &s3.GetObjectInput{

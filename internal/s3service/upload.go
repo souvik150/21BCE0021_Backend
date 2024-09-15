@@ -28,7 +28,7 @@ func UploadFileConcurrently(bucket, key string, file multipart.File, fileSize in
 	accessKey := appConfig.AppConfig.AWSAccessKey
 	secretKey := appConfig.AppConfig.AWSSecretKey
 	region := appConfig.AppConfig.AWSRegion
-	encryptionKey := []byte("pvp5j1ADUXkgMII1tf7YaHail5F1MYv8")
+	encryptionKey := []byte(appConfig.AppConfig.EncryptionKey)
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),

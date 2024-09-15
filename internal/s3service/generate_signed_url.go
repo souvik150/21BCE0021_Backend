@@ -18,7 +18,7 @@ func GeneratePresignedURL(objectKey string) (string, error) {
 	accessKey := appConfig.AppConfig.AWSAccessKey
 	secretKey := appConfig.AppConfig.AWSSecretKey
 	region := appConfig.AppConfig.AWSRegion
-	bucketName := "trademarkia-assignment"
+	bucketName := appConfig.AppConfig.BucketName
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),

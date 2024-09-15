@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	appConfig "github.com/souvik150/file-sharing-app/internal/config"
 )
 
 func DeleteFileFromS3(fileKey string) error {
@@ -19,7 +20,7 @@ func DeleteFileFromS3(fileKey string) error {
 	s3Client := s3.NewFromConfig(cfg)
 
 	_, err = s3Client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
-		Bucket: aws.String("trademarkia-assignment"),
+		Bucket: aws.String(appConfig.AppConfig.BucketName),
 		Key:    aws.String(fileKey),
 	})
 
