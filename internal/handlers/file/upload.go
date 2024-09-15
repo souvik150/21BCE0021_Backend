@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"encoding/json"
+	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -12,8 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/souvik150/file-sharing-app/internal/cache"
-	appConfig "github.com/souvik150/file-sharing-app/internal/config"
 	"github.com/souvik150/file-sharing-app/internal/database"
 	"github.com/souvik150/file-sharing-app/internal/models"
 	"github.com/souvik150/file-sharing-app/internal/schemas"
@@ -54,9 +53,9 @@ func UploadMultipleFilesHandler(c *gin.Context) {
 	}
 
 	db := database.GetDB()
-	redisClient := cache.GetClient()
 
 	var uploadedFiles []string
+	var uploadFilesPaths []string
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	wg.Add(len(files))
@@ -98,50 +97,44 @@ func UploadMultipleFilesHandler(c *gin.Context) {
 				return
 			}
 
-			fileURL, err := s3.GeneratePresignedURL(newFile.ID.String())
+			tmpDir := "/local"
+			if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
+				log.Printf("Creating /local directory...")
+				err = os.Mkdir(tmpDir, 0755)
+				if err != nil {
+					log.Printf("Error creating /local directory: %v", err)
+					return
+				}
+			}
+
+			filePath := filepath.Join(tmpDir, newFile.ID.String())
+			log.Printf("Saving file locally at path: %s", filePath)
+
+			out, err := os.Create(filePath)
 			if err != nil {
-				log.Printf("Error generating URL for file: %v", err)
+				log.Printf("Error creating local file: %v", err)
 				return
 			}
+			defer out.Close()
 
-			cacheData := schemas.FileCache{
-				ID:        newFile.ID,
-				URL:       fileURL,
-				FileName:  newFile.FileName,
-				Size:      newFile.Size,
-				FileType:  newFile.FileType,
-			}
-			
-			cacheDataBytes, err := json.Marshal(cacheData)
+			_, err = io.Copy(out, file)
 			if err != nil {
-				log.Printf("Error marshalling cache data: %v", err)
-				return
-			}
-
-			err = redisClient.Set(cache.Ctx, newFile.ID.String(), cacheDataBytes, 5*time.Minute).Err()
-			if err != nil {
-				log.Printf("Error caching file: %v", err)
-				return
-			}
-
-			bucket := appConfig.AppConfig.BucketName
-			uploadedFileName := newFile.ID.String()
-			log.Printf("Uploading file: %s to bucket: %s with ID: %s", header.Filename, bucket, uploadedFileName)
-
-			err = s3.UploadFileConcurrently(bucket, uploadedFileName, file, header.Size)
-			if err != nil {
-				log.Printf("Error uploading file: %v", err)
+				log.Printf("Error writing file to local storage: %v", err)
 				return
 			}
 
 			mu.Lock()
 			uploadedFiles = append(uploadedFiles, newFile.FileName)
+			uploadFilesPaths = append(uploadFilesPaths, filePath)
 			mu.Unlock()
 
+			log.Printf("File %s stored locally at %s", header.Filename, filePath)
 		}(header)
 	}
 
 	wg.Wait()
+
+	go s3.ProcessFilesAsync(uploadFilesPaths, parsedUserID.String())
 
 	var res schemas.UploadedFileResponse
 	res.FileNames = uploadedFiles
@@ -149,14 +142,14 @@ func UploadMultipleFilesHandler(c *gin.Context) {
 	if len(uploadedFiles) > 0 {
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
-			"message": "Files uploaded successfully",
+			"message": "Files uploaded. Undergoing processing",
 			"data": res,
 		})
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"message": "Failed to upload files",
-			"error": "Failed to upload files",
+			"error": "Failed to store files locally",
 		})
 	}
 }
