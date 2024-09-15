@@ -129,7 +129,7 @@ func UploadMultipleFilesHandler(c *gin.Context) {
 			}
 
 			bucket := "trademarkia-assignment"
-			uploadedFileName := newFile.ID.String() + "." + newFile.FileType 
+			uploadedFileName := newFile.ID.String()
 			log.Printf("Uploading file: %s to bucket: %s with ID: %s", header.Filename, bucket, uploadedFileName)
 
 			err = s3service.UploadFileConcurrently(bucket, uploadedFileName, file, header.Size)

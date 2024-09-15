@@ -10,14 +10,17 @@ import (
 func SetupRoutes(r *gin.Engine) {
 	r.POST("/register", handlers.RegisterUserHandler)
 	r.POST("/login", handlers.LoginUserHandler)
+	r.GET("/share/:share_token", handlers.ServeSharedFileHandler)
 
 	protected := r.Group("/")
 	protected.Use(middleware.AuthMiddleware()) 
 	{
 		protected.POST("/upload", handlers.UploadMultipleFilesHandler)
-		protected.GET("/share", handlers.GenerateLinkHandler)
+		protected.GET("/generate/:id", handlers.ShareFileHandler)
+		protected.DELETE("/delete/:id", handlers.DeleteFileHandler)
+		protected.GET("/deleted-files", handlers.GetUserDeletedFilesHandler)
 		protected.GET("/my-files", handlers.GetUserFilesHandler)
-		protected.POST("/update", handlers.UpdateFileHandler)
+		protected.PATCH("/update", handlers.UpdateFileHandler)
 		protected.GET("/me", handlers.GetCurrentUser)
 	}
 }

@@ -9,7 +9,6 @@ import (
 	"mime/multipart"
 	"sort"
 	"sync"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -18,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
 	appConfig "github.com/souvik150/file-sharing-app/internal/config"
+	"github.com/souvik150/file-sharing-app/internal/utils"
 )
 
 const (
@@ -28,6 +28,7 @@ func UploadFileConcurrently(bucket, key string, file multipart.File, fileSize in
 	accessKey := appConfig.AppConfig.AWSAccessKey
 	secretKey := appConfig.AppConfig.AWSSecretKey
 	region := appConfig.AppConfig.AWSRegion
+	encryptionKey := []byte("pvp5j1ADUXkgMII1tf7YaHail5F1MYv8")
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
@@ -49,10 +50,17 @@ func UploadFileConcurrently(bucket, key string, file multipart.File, fileSize in
 			return fmt.Errorf("failed to read file: %v", err)
 		}
 
+		// Encrypt the file content before uploading
+		encryptedData, err := utils.Encrypt(uploadBuffer.Bytes(), encryptionKey)
+		if err != nil {
+			log.Printf("Failed to encrypt file: %v", err)
+			return fmt.Errorf("failed to encrypt file: %v", err)
+		}
+
 		_, err = s3Svc.PutObject(context.TODO(), &s3.PutObjectInput{
 			Bucket: aws.String(bucket),
 			Key:    aws.String(key),
-			Body:   bytes.NewReader(uploadBuffer.Bytes()),
+			Body:   bytes.NewReader(encryptedData),
 		})
 		if err != nil {
 			log.Printf("Failed to upload file as single part: %v", err)
@@ -162,38 +170,4 @@ func UploadFileConcurrently(bucket, key string, file multipart.File, fileSize in
 
 	log.Println("File uploaded successfully using multipart upload")
 	return nil
-}
-
-func GeneratePresignedURL(objectKey string) (string, error) {
-	accessKey := appConfig.AppConfig.AWSAccessKey
-	secretKey := appConfig.AppConfig.AWSSecretKey
-	region := appConfig.AppConfig.AWSRegion
-  bucketName := "trademarkia-assignment"
-
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
-		config.WithRegion(region),
-	)
-	if err != nil {
-		log.Printf("Failed to load AWS config: %v", err)
-		return "", fmt.Errorf("failed to load AWS config: %v", err)
-	}
-
-	s3Client := s3.NewFromConfig(cfg)
-	presignClient := s3.NewPresignClient(s3Client)
-	expiryDuration := 15 * time.Minute
-
-	presignedReq, err := presignClient.PresignGetObject(context.TODO(), &s3.GetObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(objectKey),
-	}, s3.WithPresignExpires(expiryDuration))
-
-	if err != nil {
-		log.Printf("Failed to generate presigned URL: %v", err)
-		return "", fmt.Errorf("failed to generate presigned URL: %v", err)
-	}
-
-	log.Printf("Generated signed URL: %s", presignedReq.URL)
-
-	return presignedReq.URL, nil
 }

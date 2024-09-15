@@ -15,7 +15,7 @@ import (
 )
 
 func GenerateLinkHandler(c *gin.Context) {
-	fileId := c.Query("id")
+	fileId := c.Param("id")
 
 	if fileId == "" {
 		c.JSON(http.StatusBadRequest, gin.H{

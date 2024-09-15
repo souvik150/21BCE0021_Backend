@@ -9,6 +9,7 @@ import (
 
 	"github.com/souvik150/file-sharing-app/internal/cache"
 	"github.com/souvik150/file-sharing-app/internal/config"
+	"github.com/souvik150/file-sharing-app/internal/cron"
 	"github.com/souvik150/file-sharing-app/internal/database"
 	"github.com/souvik150/file-sharing-app/internal/routes"
 	appUtils "github.com/souvik150/file-sharing-app/internal/utils"
@@ -40,6 +41,9 @@ func main() {
         log.Fatalf("Failed to get key from Redis: %v", err)
     }
     fmt.Printf("Value from Redis: %s\n", val)
+
+    cron.StartHardDeleteWorker()
+    cron.CleanUpExpiredLinks()
 
 	router := gin.Default()
 

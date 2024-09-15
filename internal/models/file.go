@@ -3,8 +3,6 @@ package models
 import (
 	"time"
 
-	"gorm.io/gorm"
-
 	"github.com/google/uuid"
 )
 
@@ -19,5 +17,5 @@ type File struct {
 	UpdatedAt    time.Time
 	AccessedAt   time.Time
 	DeletedStatus bool
-	DeletedAt    gorm.DeletedAt `gorm:"index"`
+	DeletedAt    time.Time `gorm:"index"`
 }
